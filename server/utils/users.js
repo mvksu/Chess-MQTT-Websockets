@@ -1,4 +1,4 @@
-const users = [];
+let users = [];
 
 function userJoin(id, username, room) {
   const user = { id, username, room };
@@ -7,6 +7,14 @@ function userJoin(id, username, room) {
 }
 function getCurrentUser(id) {
   return users.find((x) => x.id === id);
+}
+
+function getAllUsers() {
+  return users
+}
+
+function removeUser(id) {
+  return users.filter((x) => x.id !== id)
 }
 
 function userLeave(id) {
@@ -22,4 +30,5 @@ module.exports = {
   getCurrentUser,
   userLeave,
   getRoomUsers,
+  getAllUsers
 };
