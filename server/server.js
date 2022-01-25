@@ -16,15 +16,17 @@ const app = express();
 const server = http.createServer(app);
 app.use(cors({
   origin: 'http://localhost:3000',
-  methods: ["GET", "POST", "DELETE", "UPDATE"],
+  methods: ["GET", "POST", "DELETE", "UPDATE", "PUT"],
 }));
 app.use(express.json());
 
 const users = require("./routes/users")
+const comments = require("./routes/comments")
 const messages = require("./routes/messages")
 const boards = require("./routes/boards")
 
 app.use('/users', users)
+app.use('/comments', comments)
 app.use('/messages', messages)
 app.use('/boards', boards)
 
@@ -32,7 +34,7 @@ app.use('/boards', boards)
 const io = socketio(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "DELETE", "UPDATE"],
+    methods: ["GET", "POST", "DELETE", "UPDATE", "PUT"],
   },
 });
 
@@ -42,7 +44,7 @@ require('dotenv').config();
 const dbConnData = {
     host: process.env.MONGO_HOST || '127.0.0.1',
     port: process.env.MONGO_PORT || 27017,
-    database: process.env.MONGO_DATABASE || 'projekt'
+    database: process.env.MONGO_DATABASE || 'projekto'
 };
 
 const mongoose = require('mongoose');
@@ -61,8 +63,7 @@ mongoose
   .catch(error => console.error('Error connecting to MongoDB', error));
 
 
-//WS
-
+//W
 io.on("connection", (socket) => {
   socket.on("joinRoom", ({ username, room }) => {
     const user = userJoin(socket.id, username, room);
