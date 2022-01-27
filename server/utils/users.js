@@ -1,16 +1,23 @@
-let users = [];
+const User = require("../models/User");
 
-function userJoin(id, username, room) {
-  const user = { id, username, room };
-  users.push(user);
-  return user;
-}
-function getCurrentUser(id) {
-  return users.find((x) => x.id === id);
+let usersOnline = [];
+
+async function userHasLoggedIn(username, socketid) {
+  usersOnline.push({username, socketid})
+  return usersOnline;
 }
 
-function getAllUsers() {
-  return users
+async function userHasLoggedOut(socketid) {
+  usersOnline = usersOnline.filter(x => x.socketid !== socketid);
+  return usersOnline
+}
+
+function getOnlineUsers() {
+  return usersOnline;
+}
+
+function getAllUsersOnline() {
+  return usersOnline
 }
 
 function removeUser(id) {
@@ -26,9 +33,7 @@ function getRoomUsers(room) {
 }
 
 module.exports = {
-  userJoin,
-  getCurrentUser,
-  userLeave,
-  getRoomUsers,
-  getAllUsers
+  userHasLoggedIn,
+  userHasLoggedOut,
+  getOnlineUsers
 };
