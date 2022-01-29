@@ -1,39 +1,44 @@
 const User = require("../models/User");
 
 let usersOnline = [];
+let usersRoom = [];
 
 async function userHasLoggedIn(username, socketid) {
-  usersOnline.push({username, socketid})
+  usersOnline.push({ username, socketid });
   return usersOnline;
 }
 
 async function userHasLoggedOut(socketid) {
-  usersOnline = usersOnline.filter(x => x.socketid !== socketid);
-  return usersOnline
+  usersOnline = usersOnline.filter((x) => x.socketid !== socketid);
+  return usersOnline;
 }
 
 function getOnlineUsers() {
   return usersOnline;
 }
 
-function getAllUsersOnline() {
-  return usersOnline
+function userHasJoinedRoom({username, room, socketid}) {
+  if (!usersRoom.map(x => x.username).includes(username)) {
+    usersRoom.push({ username, room, socketid });
+  }
+  return usersRoom;
 }
 
-function removeUser(id) {
-  return users.filter((x) => x.id !== id)
-}
-
-function userLeave(id) {
-  return users.filter((x) => x.id === id)[0];
+async function userExit(socketid) {
+  usersRoom = usersRoom.filter(user => user.socketid !== socketid)
+  return usersRoom
 }
 
 function getRoomUsers(room) {
-  return users.filter((user) => user.room === room);
+  return usersRoom.filter((user) => user.room === room);
 }
+
 
 module.exports = {
   userHasLoggedIn,
   userHasLoggedOut,
-  getOnlineUsers
+  getOnlineUsers,
+  userHasJoinedRoom,
+  userExit,
+  getRoomUsers,
 };

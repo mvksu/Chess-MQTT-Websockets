@@ -3,7 +3,23 @@ const http = require("http");
 const express = require("express");
 const cors = require("cors");
 const socketio = require("socket.io");
-const { userHasLoggedIn, userHasLoggedOut, getOnlineUsers } = require("./utils/users");
+const {
+  userHasLoggedIn,
+  userHasLoggedOut,
+  getOnlineUsers,
+  userHasJoinedRoom,
+  getRoomUsers,
+  userExit,
+} = require("./utils/users");
+const {
+  newBoard,
+  move,
+  getCurrentBoard,
+  newGame,
+  undoMove,
+  addPoints,
+  oddPoints
+} = require("./utils/boards");
 const formatMessage = require("./utils/messages");
 
 const app = express();
@@ -122,54 +138,104 @@ const io = socketio(server, {
 });
 io.on("connection", (socket) => {
   console.log("connection new client");
-  socket.on('onlineUsers', () => {
-    console.log("req from c")
+  socket.on("onlineUsers", () => {
+    console.log("req from c");
     const onlineUsers = getOnlineUsers();
-    io.emit('onlineUsers', onlineUsers)
-  })
-  socket.on("userHasLoggedIn", async({ username }) => {
-    console.log('user logged in', username)
+    io.emit("onlineUsers", onlineUsers);
+  });
+  socket.on("userHasLoggedIn", async ({ username }) => {
+    console.log("user logged in", username);
     const onlineUsers = await userHasLoggedIn(username, socket.id);
-    io.emit('onlineUsers', onlineUsers)
-    // socket.join(user.room);
-
-    // socket.emit("message", formatMessage("Admin", "Welcome to chat"));
-
-    // socket.broadcast
-    //   .to(user.room)
-    //   .emit(
-    //     "message",
-    //     formatMessage("Admin", `${user.username} has joined to the chat`)
-    //   );
-    // io.to(user.room).emit("roomUsers", {
-    //   room: user.room,
-    //   users: getRoomUsers(user.room),
-    // });
+    io.emit("onlineUsers", onlineUsers);
   });
 
-  // socket.on("chatMessage", (msg) => {
-  //   const user = getCurrentUser(socket.id);
-  //   io.to(user.room).emit("message", formatMessage(user.username, msg));
-  // });
+  socket.on("joinRoom", (msg) => {
+    console.log(`${msg.token} joined room ${msg.room.name}`);
+    const room = msg.room._id;
+    const user = msg.token;
+    socket.join(room);
+    userHasJoinedRoom({
+      username: user,
+      room,
+      socketid: socket.id,
+    });
+    socket.broadcast
+      .to(room)
+      .emit(
+        "message",
+        formatMessage("Admin", `${user} has joined to the chat`)
+      );
+    io.to(room).emit("roomUsers", {
+      room: room,
+      users: getRoomUsers(room),
+    });
+    newBoard(room)
+    io.to(room).emit("board", getCurrentBoard(room).board.fen());
+    socket.on("userExit", (msg) => {
+      console.log(`${msg.token} exited room`);
+      socket.leave(room)
+      userExit(socket.id);
+      io.to(room).emit("roomUsers", {
+        room: room,
+        users: getRoomUsers(room),
+      });
+      io.to(room).emit(
+        "message",
+        formatMessage("Admin", `${msg.token} has left the chat`)
+      );
+    });
+    socket.emit("message", formatMessage("Admin", "Welcome to room"));
+    socket.on("chatMessage", (msg) => {
+      console.log(msg);
+      io.to(room).emit("message", formatMessage(msg.token, msg.message));
+    });
 
-  // socket.on("gameStart", (msg) => {
-  //   io.to(user.room).emit("message", "Game has started");
-  // });
+    //Game Logic
+    socket.on("game_started", () => {
+      io.to(room).emit("result", "Game Started!");
+    });
+    socket.on("move", (msg) => {
+      move(msg, room);
+      const fen = getCurrentBoard(room).board.fen();
+      io.to(room).emit("board", fen);
+    });
+
+    socket.on("surrender", (msg) => {
+      console.log("surrender", msg);
+      io.to(room).emit("result", `${msg.token} has surrender`);
+      newGame(room);
+    });
+
+    socket.on("undo", (msg) => {
+      socket.broadcast.to(room).emit("undoReq");
+    });
+    socket.on("undoYes", (msg) => {
+      console.log("undotes");
+      undoMove(room);
+      const fen = getCurrentBoard(room).board.fen();
+      io.to(room).emit("board", fen);
+    });
+    socket.on("showAscii", (msg) => {
+      console.log(getCurrentBoard(room).board.ascii());
+    });
+
+    socket.on("game_over", (msg) => {
+      if (msg.loser === "b") {
+        io.to(room).emit("result", "Game Over! Black is n00b");
+        addPoints(msg.users[0])
+        oddPoints(msg.users[1])
+      } else {
+        io.to(room).emit("result", "Game Over! White is n00b");
+        oddPoints(msg.users[0])
+        addPoints(msg.users[1])
+      }
+    });
+  });
 
   socket.on("disconnect", async () => {
     console.log("disconnect");
     const users = await userHasLoggedOut(socket.id);
-    io.emit('onlineUsers', users)
-    // if (user) {
-    //   io.to(user.room).emit(
-    //     "message",
-    //     formatMessage("Admin", `${user.username} has left the chat`)
-    //   );
-    //   io.to(user.room).emit("roomUsers", {
-    //     room: user.room,
-    // users: getRoomUsers(user.room),
-    // });
-    // }
+    io.emit("onlineUsers", users);
   });
 });
 

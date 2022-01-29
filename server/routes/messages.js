@@ -1,39 +1,49 @@
 const router = require("express").Router();
+const Message = require("../models/Message");
+const User = require("../models/User");
 
-//Messages
-
-router.get("/users", function async (req, res) {
-  const users = getAllUsers();
+router.get("/", async (req, res) => {
   try {
-    res.send(users);
-  } catch (error) {
+    const comments = await Message.find({});
+    res.send(comments);
+  } catch (err) {
     console.log(err);
   }
 });
 
-router.post("/users", function async (req, res) {
-  const user = userJoin(req.body);
+router.get("/:username", async (req, res) => {
   try {
-    res.send(user);
-  } catch (error) {
+    const messages = await Message.find({ username: req.params.username });
+    res.send(messages);
+  } catch (err) {
     console.log(err);
   }
 });
 
-router.put("/users/:id", function async (req, res) {
-  const user = userEdit(req.body);
+router.post("/", async (req, res) => {
   try {
-    res.send(user);
+    const comment = await Message.create(req.body);
+    res.send(comment);
   } catch (error) {
+    console.log(error.message);
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  console.log(req.body, req.params.id);
+  try {
+    const comment = await Message.findOneAndUpdate({ _id: req.params.id }, {text: req.body.text}, { new: true });
+    res.send(comment);
+  } catch (err) {
     console.log(err);
   }
 });
 
-router.delete("/users/:id", function async (req, res) {
-  const user = userJoin(req.body);
+router.delete("/:id", async (req, res) => {
   try {
-    res.send(user);
-  } catch (error) {
+    const comment = await Message.findByIdAndDelete(req.params.id);
+    res.send(comment);
+  } catch (err) {
     console.log(err);
   }
 });
