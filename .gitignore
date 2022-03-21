@@ -1,3 +1,4 @@
-.node_modules
+/node_modules
 .git_ignore
 .DS_Store
+.test.js
