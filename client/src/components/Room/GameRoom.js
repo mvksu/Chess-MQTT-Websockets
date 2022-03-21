@@ -6,8 +6,6 @@ import axios from "axios";
 import Modal from "./EditRoom";
 import Chat from "./Chat";
 import PlayVsPlay from "../Chess/PlayVsPlay";
-import mqtt from "mqtt/dist/mqtt";
-const websocketUrl = "ws://broker.emqx.io:8083/mqtt";
 
 export default function GameRoom({ token, socket }) {
   const [showModal, setShowModal] = useState(false);
@@ -19,29 +17,8 @@ export default function GameRoom({ token, socket }) {
   const [result, setResult] = useState("Let's play chess");
 
   useEffect(() => {
-    const client = mqtt.connect(websocketUrl);
-    client.stream.on("error", (err) => {
-      console.log(`Connection to ${websocketUrl} failed`);
-      client.end();
-    });
-    client.subscribe("roomUsers", (m) => console.log("Subcribed to roomUsers"));
-    client.subscribe("room/msg", () => console.log("Subscribed to room/msg"));
-    client.on("message", (topic, message, packet) => {
-      if (topic === "roomUsers") {
-        if (id === JSON.parse(message).room) {
-          setRoomUsers(JSON.parse(message).users);
-        }
-      }
-      if (topic === "room/msg") {
-        console.log("Result msg", JSON.parse(message));
-        if (id === JSON.parse(message).room) {
-          setResult(JSON.parse(message).result);
-        }
-      }
-      // console.log(topic, JSON.parse(message));
-    });
-    return () => client.end();
-  }, []);
+    socket.on("roomUsers", (res) => setRoomUsers(res.users));
+  }, [socket]);
 
   useEffect(() => {
     axios

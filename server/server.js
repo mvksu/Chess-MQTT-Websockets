@@ -103,31 +103,6 @@ mongoose
   })
   .catch((error) => console.error("Error connecting to MongoDB", error));
 
-//MQTT over Websocke
-
-// const mqtt = require("mqtt");
-// const client = mqtt.connect("mqtt://broker.emqx.io:1883");
-
-// client.on("connect", function () {
-//   console.log(`Connected to to node`)
-//   client.publish('connection', 'loged in')
-//   client.subscribe("userLoggedIn");
-//   client.subscribe("userLoggedOut");
-// });
-
-// client.on("message", async function (topic, message) {
-//   console.log(topic)
-// if (topic === "userLoggedIn") {
-//   const users = await userHasLoggedIn(message);
-//   client.publish("onlineUsers", JSON.stringify(users))
-//   console.log('user logged in', message.toString())
-// }
-// if (topic === "userLoggedOut") {
-//   const users = await userHasLoggedOut(message);
-//   client.publish("onlineUsers", JSON.stringify(users))
-//   console.log('user logged out', message.toString())
-// }
-// });
 
 //WS
 const io = socketio(server, {
@@ -137,9 +112,7 @@ const io = socketio(server, {
   },
 });
 io.on("connection", (socket) => {
-  console.log("connection new client");
   socket.on("onlineUsers", () => {
-    console.log("req from c");
     const onlineUsers = getOnlineUsers();
     io.emit("onlineUsers", onlineUsers);
   });

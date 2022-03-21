@@ -3,7 +3,6 @@ import { Chessboard } from "react-chessboard";
 import Chess from "chess.js";
 import mqtt from "mqtt/dist/mqtt";
 import { useParams } from "react-router-dom";
-const websocketUrl = "ws://broker.emqx.io:8083/mqtt";
 
 function timeToMinutes(time) {
   const minutes = Math.floor(time / 60);
@@ -26,29 +25,6 @@ export default function PlayVsPlay({ roomUsers, token, socket, room }) {
     }
   }, [room]);
 
-  useEffect(() => {
-    const client = mqtt.connect(websocketUrl);
-    client.stream.on("error", (err) => {
-      console.log(`Connection to ${websocketUrl} failed`);
-      client.end();
-    });
-    client.subscribe("time1", (m) => console.log("Subcribed to time1"));
-    client.subscribe("time2", (m) => console.log("Subcribed to time2"));
-    client.on("message", (topic, message, packet) => {
-      if (topic === "time1") {
-        if (JSON.parse(message).room === id) {
-          setTime1(JSON.parse(message).time1);
-        }
-      }
-      if (topic === "time2") {
-        if (JSON.parse(message).room === id) {
-          setTime2(JSON.parse(message).time2);
-        }
-      }
-      // console.log(topic, JSON.parse(message), id);
-    });
-    return () => client.end();
-  }, []);
 
   useEffect(() => {
     socket.on("board", (msg) => {
@@ -60,7 +36,7 @@ export default function PlayVsPlay({ roomUsers, token, socket, room }) {
 
   useEffect(() => {
     if (game.game_over() && token === roomUsers[0].username) {
-      console.log("game ober");
+      console.log("game over");
       socket.emit("game_over", { loser: game.turn(), users: roomUsers });
     }
   }, [socket, roomUsers]);

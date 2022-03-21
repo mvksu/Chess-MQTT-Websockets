@@ -12,8 +12,6 @@ import RegisterForm from "./components/Form/RegisterForm";
 import ProfileDetails from "./components/Profile/ProfileDetail";
 import Cookies from "js-cookie";
 import io from "socket.io-client";
-import mqtt from "mqtt/dist/mqtt";
-const websocketUrl = "ws://broker.emqx.io:8083/mqtt";
 const socket = io("http://localhost:5000", { transports: ["websocket"] });
 
 function App() {
@@ -21,26 +19,9 @@ function App() {
 
   useEffect(() => {
     if (token) {
+      console.log("user is logged")
       socket.emit("userHasLoggedIn", { username: token });
     }
-  }, [token]);
-
-  useEffect(() => {
-    const client = mqtt.connect(websocketUrl);
-    client.stream.on("error", (err) => {
-      console.log(`Connection to ${websocketUrl} failed`);
-      client.end();
-    });
-    client.on("connect", function () {
-      console.log("connected to broker");
-    });
-    // client.subscribe("time1", (m) => console.log("Subcribed to time1"));
-    // client.on("message", (topic, message, packet) => {
-    //   if(topic === "time1") {
-    //     console.log(JSON.parse(message))
-    //   }
-    // });
-    return () => client.end();
   }, [token]);
 
   useEffect(() => {

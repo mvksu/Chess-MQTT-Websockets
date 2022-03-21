@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import mqtt from "mqtt/dist/mqtt";
-const websocketUrl = "ws://broker.emqx.io:8083/mqtt";
 
 export default function Chat({ token, roomUsers, room, result, socket }) {
   const [message, setMessage] = useState("");
@@ -13,13 +11,11 @@ export default function Chat({ token, roomUsers, room, result, socket }) {
       console.log(msg);
       setMessages(messages => [...messages, msg]);
     });
-  }, []);
-
-  useEffect(() => {
     socket.on("undoReq", () => {
       setShowUndo(true);
     });
   }, []);
+
 
   const handleSentMessage = (msg) => {
     console.log(msg);

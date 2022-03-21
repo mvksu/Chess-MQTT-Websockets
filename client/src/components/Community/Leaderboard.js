@@ -1,28 +1,15 @@
 import Card from "./Card";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import mqtt from "mqtt/dist/mqtt";
-const websocketUrl = "ws://broker.emqx.io:8083/mqtt";
 
-export default function Leaderboard({token }) {
+export default function Leaderboard({token, socket }) {
   const [users, setUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([])
 
   useEffect(() => {
-    const client = mqtt.connect(websocketUrl);
-    client.stream.on("error", (err) => {
-      console.log(`Connection to ${websocketUrl} failed`);
-      client.end();
-    });
-    client.subscribe("onlineUsers", (m) => console.log("Subcribed to onlineUsers"));
-    client.on("message", (topic, message, packet) => {
-      if(topic === "onlineUsers") {
-        setOnlineUsers(JSON.parse(message));
-      }
-      // console.log(topic, JSON.parse(message));
-    });
-    return () => client.end();
-  }, []);
+    socket.emit('onlineUsers')
+    socket.on('onlineUsers', (res) => setOnlineUsers(res))
+  }, [socket]);
 
   useEffect(() => {
     axios
